@@ -1,4 +1,4 @@
-import AVFondation
+import AVFoundation
 
 struct VideoCaptureDevice {
     let session = AVCaptureSession()

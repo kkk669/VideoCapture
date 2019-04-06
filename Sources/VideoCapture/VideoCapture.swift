@@ -1,9 +1,9 @@
 import AVFoundation
 
-struct VideoCapture {
+public struct VideoCapture {
     let output: AVAssetReaderOutput
 
-    init(url: URL) {
+    public init(url: URL) {
         let asset = AVAsset(url: url)
         let reader = try! AVAssetReader(asset: asset)
         self.output = AVAssetReaderTrackOutput(track: asset.tracks(withMediaType: .video).first!, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange])

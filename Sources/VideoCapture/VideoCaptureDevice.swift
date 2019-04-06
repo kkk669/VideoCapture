@@ -1,6 +1,6 @@
 import AVFoundation
 
-struct VideoCaptureDevice {
+public struct VideoCaptureDevice {
     let session = AVCaptureSession()
     let output: AVCaptureVideoDataOutput = {
         let output = AVCaptureVideoDataOutput()
@@ -8,7 +8,7 @@ struct VideoCaptureDevice {
         output.alwaysDiscardsLateVideoFrames = true
         return output
     }()
-    var delegate: AVCaptureVideoDataOutputSampleBufferDelegate? {
+    public var delegate: AVCaptureVideoDataOutputSampleBufferDelegate? {
         get {
             return self.output.sampleBufferDelegate
         }
@@ -31,7 +31,7 @@ struct VideoCaptureDevice {
         }
     }
 
-    init(preset: AVCaptureSession.Preset) throws {
+    public init(preset: AVCaptureSession.Preset) throws {
         self.session.sessionPreset = preset
 
         let device = getDefaultDevice()!
@@ -46,13 +46,13 @@ struct VideoCaptureDevice {
         }
     }
 
-    func start() {
+    public func start() {
         if !self.session.isRunning {
             self.session.startRunning()
         }
     }
 
-    func stop() {
+    public func stop() {
         if self.session.isRunning {
             self.session.stopRunning()
         }

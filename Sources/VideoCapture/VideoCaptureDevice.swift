@@ -79,7 +79,7 @@ func configureDevice(device: AVCaptureDevice) -> Result<(), ConfigureDeviceError
     var bestFrameRateRange: AVFrameRateRange? = nil
     for format in device.formats {
         for range in format.videoSupportedFrameRateRanges {
-            if let best = bestFrameRateRange, range.maxFrameRate > best.maxFrameRate {
+            if range.maxFrameRate > bestFrameRateRange?.maxFrameRate ?? -Float64.greatestFiniteMagnitude {
                 bestFormat = format
                 bestFrameRateRange = range
             }

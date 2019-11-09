@@ -13,9 +13,9 @@ public struct VideoCapture {
 }
 
 extension VideoCapture: Sequence, IteratorProtocol {
-    typealias Element = CMSampleBuffer
+    public typealias Element = CMSampleBuffer
 
-    mutating func next() -> VideoCapture.Element? {
+    mutating public func next() -> VideoCapture.Element? {
         return self.output.copyNextSampleBuffer()
     }
 }

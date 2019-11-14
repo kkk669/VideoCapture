@@ -1,16 +1,24 @@
 import AVFoundation
+import Combine
 
 public struct VideoCaptureDevice {
     let session = AVCaptureSession()
     let output: AVCaptureVideoDataOutput = {
         let output = AVCaptureVideoDataOutput()
-        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+        output.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
         output.alwaysDiscardsLateVideoFrames = true
         return output
     }()
+    let delegate = SampleBufferDelegate()
     let mirrored: Bool
 
-    public init(preset: AVCaptureSession.Preset, position: AVCaptureDevice.Position, mirrored: Bool) throws {
+    public init(
+        preset: AVCaptureSession.Preset,
+        position: AVCaptureDevice.Position,
+        mirrored: Bool
+    ) throws {
         self.session.sessionPreset = preset
         self.mirrored = mirrored
 
@@ -24,6 +32,23 @@ public struct VideoCaptureDevice {
         if self.session.canAddOutput(self.output) {
             self.session.addOutput(self.output)
         }
+
+        let queue = DispatchQueue(label: "cameraQueue")
+        self.output.setSampleBufferDelegate(self.delegate, queue: queue)
+
+        if let connection = self.output.connection(with: .video) {
+            if connection.isVideoStabilizationSupported {
+                connection.preferredVideoStabilizationMode = .auto
+            }
+            if connection.isVideoOrientationSupported {
+                connection.videoOrientation = .landscapeLeft
+            }
+            if connection.isVideoMirroringSupported {
+                connection.isVideoMirrored = self.mirrored
+            }
+        }
+
+        self.session.startRunning()
     }
 
     public func start() {
@@ -37,27 +62,6 @@ public struct VideoCaptureDevice {
             self.session.stopRunning()
         }
     }
-    
-    public func setDelegate(_ delegate: AVCaptureVideoDataOutputSampleBufferDelegate?) {
-        if session.isRunning {
-            self.session.stopRunning()
-        }
-
-        let queue = DispatchQueue(label: "cameraQueue")
-        self.output.setSampleBufferDelegate(delegate, queue: queue)
-
-        if let connection = self.output.connection(with: .video) {
-            if connection.isVideoStabilizationSupported {
-                connection.preferredVideoStabilizationMode = .auto
-            }
-            if connection.isVideoOrientationSupported {
-                connection.videoOrientation = .landscapeLeft
-            }
-            if connection.isVideoMirroringSupported {
-                connection.isVideoMirrored = self.mirrored
-            }
-        }
-    }
 
     public func rotate(orientation: AVCaptureVideoOrientation) {
         if let connection = self.output.connection(with: .video), connection.isVideoOrientationSupported {
@@ -66,10 +70,34 @@ public struct VideoCaptureDevice {
     }
 }
 
+extension VideoCaptureDevice {
+    class SampleBufferDelegate: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+        let subject = PassthroughSubject<VideoCaptureDevice.Output, VideoCaptureDevice.Failure>()
+
+        func captureOutput(
+            _ output: AVCaptureOutput,
+            didOutput sampleBuffer: CMSampleBuffer,
+            from connection: AVCaptureConnection
+        ) {
+            self.subject.send(sampleBuffer)
+        }
+    }
+}
+
+extension VideoCaptureDevice: VideoCapture {
+    public func receive<S: Subscriber>(subscriber: S)
+    where
+        VideoCaptureDevice.Failure == S.Failure,
+        VideoCaptureDevice.Output == S.Input
+    {
+        self.delegate.subject.receive(subscriber: subscriber)
+    }
+}
+
 func getDefaultDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
-    if let device = AVCaptureDevice.default(.builtInDualCamera , for: .video, position: position) {
+    if let device = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: position) {
         return device
-    } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera , for: .video, position: position) {
+    } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
         return device
     } else {
         return nil

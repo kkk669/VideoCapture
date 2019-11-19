@@ -47,8 +47,6 @@ public struct VideoCaptureDevice {
                 connection.isVideoMirrored = self.mirrored
             }
         }
-
-        self.session.startRunning()
     }
 
     public func start() {
@@ -91,6 +89,7 @@ extension VideoCaptureDevice: VideoCapture {
         VideoCaptureDevice.Output == S.Input
     {
         self.delegate.subject.receive(subscriber: subscriber)
+        self.start()
     }
 }
 

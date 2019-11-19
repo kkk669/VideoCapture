@@ -32,6 +32,8 @@ extension VideoCaptureFile: VideoCapture {
         VideoCaptureFile.Failure == S.Failure,
         VideoCaptureFile.Output == S.Input
     {
-        self.publisher.receive(subscriber: subscriber)
+        DispatchQueue.global().async {
+            self.publisher.receive(subscriber: subscriber)
+        }
     }
 }

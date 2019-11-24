@@ -12,7 +12,31 @@ public struct VideoCaptureDevice {
         return output
     }()
     let delegate = SampleBufferDelegate()
-    let mirrored: Bool
+    public var mirrored: Bool? {
+        get {
+            self.output.connection(with: .video)?.isVideoMirrored
+        }
+        set {
+            if let val = newValue, let connection = self.output.connection(with: .video), connection.isVideoMirroringSupported {
+                connection.isVideoMirrored = val
+            }
+        }
+    }
+    public var position: AVCaptureDevice.Position {
+        didSet {
+            if let device = getDefaultDevice(position: self.position) {
+                configureDevice(device: device)
+                if let input = try? AVCaptureDeviceInput(device: device) {
+                    while let first = self.session.inputs.first {
+                        self.session.removeInput(first)
+                    }
+                    if self.session.canAddInput(input) {
+                        self.session.addInput(input)
+                    }
+                }
+            }
+        }
+    }
 
     public init(
         preset: AVCaptureSession.Preset,
@@ -20,9 +44,9 @@ public struct VideoCaptureDevice {
         mirrored: Bool
     ) throws {
         self.session.sessionPreset = preset
-        self.mirrored = mirrored
+        self.position = position
 
-        let device = getDefaultDevice(position: position)!
+        let device = getDefaultDevice(position: self.position)!
         try configureDevice(device: device).get()
         let input = try AVCaptureDeviceInput(device: device)
 
@@ -44,7 +68,7 @@ public struct VideoCaptureDevice {
                 connection.videoOrientation = .landscapeLeft
             }
             if connection.isVideoMirroringSupported {
-                connection.isVideoMirrored = self.mirrored
+                connection.isVideoMirrored = mirrored
             }
         }
     }

@@ -29,8 +29,8 @@ extension VideoCaptureFile: Sequence, IteratorProtocol {
 extension VideoCaptureFile: VideoCapture {
     public func receive<S: Subscriber>(subscriber: S)
     where
-        VideoCaptureFile.Failure == S.Failure,
-        VideoCaptureFile.Output == S.Input
+        Failure == S.Failure,
+        Output == S.Input
     {
         DispatchQueue.global().async {
             self.publisher.receive(subscriber: subscriber)

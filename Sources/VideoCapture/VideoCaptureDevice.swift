@@ -94,7 +94,7 @@ public struct VideoCaptureDevice {
 
 extension VideoCaptureDevice {
     class SampleBufferDelegate: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
-        let subject = PassthroughSubject<VideoCaptureDevice.Output, VideoCaptureDevice.Failure>()
+        let subject = PassthroughSubject<Output, Failure>()
 
         func captureOutput(
             _ output: AVCaptureOutput,
@@ -109,8 +109,8 @@ extension VideoCaptureDevice {
 extension VideoCaptureDevice: VideoCapture {
     public func receive<S: Subscriber>(subscriber: S)
     where
-        VideoCaptureDevice.Failure == S.Failure,
-        VideoCaptureDevice.Output == S.Input
+        Failure == S.Failure,
+        Output == S.Input
     {
         self.delegate.subject.receive(subscriber: subscriber)
         self.start()
